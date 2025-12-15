@@ -29,8 +29,16 @@ const DATE_FORMATS = {
   monthYear: "MM/yyyy",
 };
 
-export function formatDateRange(startDate, endDate, formatKey = "shortDate") {
+export function formatDateRange(startDate, endDate, formatKey) {
+  
+  if (!formatKey) {
+    throw new Error("formatString is required");
+  }
+
   const formatString = DATE_FORMATS[formatKey];
+  if (!formatString) {
+    throw new Error("Invalid formatString key");
+  }
 
   const start = new Date(startDate);
   const end = new Date(endDate);
