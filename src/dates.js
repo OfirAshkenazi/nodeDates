@@ -1,6 +1,5 @@
 import {
   format,
-
   getYear,
   getMonth,
   getDate,
@@ -12,7 +11,6 @@ import {
   getDayOfYear,
   getQuarter,
   getDaysInMonth,
-
   addYears,
   addMonths,
   addWeeks,
@@ -20,8 +18,9 @@ import {
   addHours,
   addMinutes,
   addSeconds,
+  parse,
+  isValid
 } from "date-fns";
-
 
 // Q - a
 const DATE_FORMATS = {
@@ -30,7 +29,6 @@ const DATE_FORMATS = {
 };
 
 export function formatDateRange(startDate, endDate, formatKey) {
-  
   if (!formatKey) {
     throw new Error("formatString is required");
   }
@@ -43,13 +41,21 @@ export function formatDateRange(startDate, endDate, formatKey) {
   const start = new Date(startDate);
   const end = new Date(endDate);
 
+  if (!isValid(start)) {
+    throw new Error("Invalid start date");
+  }
+
+  if (!isValid(end)) {
+    throw new Error("Invalid end date");
+  }
+
+
   const startText = format(start, formatString);
   const endText = format(end, formatString);
   const result = startText + " - " + endText;
 
   return result;
 }
-
 
 // Q - b
 export function getDateInfo(dateInput, timeZone) {
@@ -74,10 +80,9 @@ export function getDateInfo(dateInput, timeZone) {
       parts[p.type] = p.value;
     }
 
-    const dateString =
-      parts.year + "-" +parts.month + "-" + parts.day + "T" + parts.hour + ":" + parts.minute + ":" + parts.second + ".000";
-
-    date = new Date(dateString);
+    const dateString = `${parts.year}-${parts.month}-${parts.day} ${parts.hour}:${parts.minute}:${parts.second}`;
+    מםגק;
+    date = parse(dateString, "yyyy-MM-dd HH:mm:ss", new Date());
   }
 
   return {
@@ -94,20 +99,66 @@ export function getDateInfo(dateInput, timeZone) {
     weekOfYear: getISOWeek(date),
     dayOfYear: getDayOfYear(date),
     quarter: getQuarter(date),
-    isWeekend: date.getDay() >= 4, 
+    isWeekend: date.getDay() >= 4,
     daysInMonth: getDaysInMonth(date),
     timestamp: date.getTime(),
   };
 }
 
-
 // Q - c
+
+export const INTERVALS = {
+  YEAR: "year",
+  MONTH: "month",
+  WEEK: "week",
+  DAY: "day",
+  HALF_DAY: "half-day",
+  HOUR: "hour",
+  MINUTE: "minute",
+  SECOND: "second",
+};
+
+const addYear = (date) => addYears(date, 1);
+const addMonth = (date) => addMonths(date, 1);
+const addWeek = (date) => addWeeks(date, 1);
+const addDay = (date) => addDays(date, 1);
+const addHalfDay = (date) => addHours(date, 12);
+const addHour = (date) => addHours(date, 1);
+const addMinute = (date) => addMinutes(date, 1);
+const addSecond = (date) => addSeconds(date, 1);
+
+
+const INTERVAL_MAP = {
+  [INTERVALS.YEAR]: addYear,
+  [INTERVALS.MONTH]: addMonth,
+  [INTERVALS.WEEK]: addWeek,
+  [INTERVALS.DAY]: addDay,
+  [INTERVALS.HALF_DAY]: addHalfDay,
+  [INTERVALS.HOUR]: addHour,
+  [INTERVALS.MINUTE]: addMinute,
+  [INTERVALS.SECOND]: addSecond,
+};
+
+
 export function getDateInterval(startDate, endDate, interval = "day") {
   const start = new Date(startDate);
   const end = new Date(endDate);
 
-   if (start > end) {
+  if (!isValid(start)) {
+    throw new Error("Invalid start date");
+  }
+
+  if (!isValid(end)) {
+    throw new Error("Invalid end date");
+  }
+
+  if (start > end) {
     throw new Error("Start date must be before end date");
+  }
+
+  const addStep = INTERVAL_MAP[interval];
+  if (!addStep) {
+    throw new Error("Unsupported interval: " + interval);
   }
 
   const dates = [];
@@ -116,35 +167,10 @@ export function getDateInterval(startDate, endDate, interval = "day") {
   dates.push(current);
 
   while (true) {
-    let next;
-
-    if (interval === "year") {
-      next = addYears(current, 1);
-    } else if (interval === "month") {
-      next = addMonths(current, 1);
-    } else if (interval === "week") {
-      next = addWeeks(current, 1);
-    } else if (interval === "day") {
-      next = addDays(current, 1);
-    } else if (interval === "half-day") {
-      next = addHours(current, 12);
-    } else if (interval === "hour") {
-      next = addHours(current, 1);
-    } else if (interval === "minute") {
-      next = addMinutes(current, 1);
-    } else if (interval === "second") {
-      next = addSeconds(current, 1);
-    } else {
-      throw new Error("Unsupported interval: " + interval);
-    }
+    const next = addStep(current);
 
     if (next > end) {
       dates.push(end);
-      break;
-    }
-
-    if (next.getTime() === end.getTime()) {
-      dates.push(next);
       break;
     }
 
@@ -154,5 +180,3 @@ export function getDateInterval(startDate, endDate, interval = "day") {
 
   return dates;
 }
-
-
