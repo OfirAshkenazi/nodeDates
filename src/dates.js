@@ -80,9 +80,15 @@ export function getDateInfo(dateInput, timeZone) {
       parts[p.type] = p.value;
     }
 
-    const dateString = `${parts.year}-${parts.month}-${parts.day} ${parts.hour}:${parts.minute}:${parts.second}`;
-    מםגק;
-    date = parse(dateString, "yyyy-MM-dd HH:mm:ss", new Date());
+    date = set(date, {
+      year: Number(parts.year),
+      month: Number(parts.month) - 1,
+      date: Number(parts.day),
+      hours: Number(parts.hour),
+      minutes: Number(parts.minute),
+      seconds: Number(parts.second),
+      milliseconds: 0,
+    });
   }
 
   return {
